@@ -1,0 +1,10 @@
+logging:
+  config: classpath:logback-local.xml   
+
+server:
+  context-parameters: #指定环境参数
+    enable: true
+    minTime: -1
+    maxShowParam: 1
+
+testmyconfig: zxc

@@ -1,0 +1,40 @@
+spring:
+  sleuth:
+    sampler:
+      percentage: 1.0
+    hystrix: 
+      strategy: 
+        enabled: false    
+  datasource:
+    driver-class-name: com.mysql.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/platform_devdb?useUnicode=true&amp;characterEncoding=utf-8
+    username: root
+    password: 1234
+    max-idle: 10
+    max-wait: 10000
+    min-idle: 5
+    initial-size: 5
+    validation-query: SELECT 1
+    test-on-borrow: false
+    test-while-idle: true
+    time-between-eviction-runs-millis: 18800
+    jdbc-interceptors: ConnectionState;SlowQueryReport(threshold=0)
+hadoop:
+  hdfs: hdfs://192.168.155.4:9000  
+
+mybatis:
+  mapperLocations: classpath*:mapper/**/*Dao.xml
+  executor-type: REUSE   
+  
+#工作流  
+bpm:
+  rule: NodeRule       
+
+saa:
+  power: false
+  basePackage: ins/**/po 
+server:
+  context-parameters: #指定环境参数
+    enable: true
+    minTime: -1
+    maxShowParam: 1 
