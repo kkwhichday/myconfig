@@ -1,112 +1,77 @@
-#自定义用户名和密码
-myauth:
-  eureka: #Eureka Server的用户名和密码    
-    username: admin
-    password: thefutureissc_2018
-
-#Config Server的用户名和密码  
-security:
-  user:
-    name: admin
-    password: thefutureissc_2018
-        
+#dev环境公共配置文件
 spring:
-  application:
-    name: config-server   
-  profiles:
-    active: native
-      
-server:
-  port: 18010
-
-management:  
-  security:  
-    enabled: false # spring-boot 1.5.2之后严格执行安全策略，所以需要配置这个为false ,否则很多点监控不到    
-
-logging:
-  config: classpath:logback-${spring.profiles.active}.xml
-
-eureka:
-  client: 
-    registry-fetch-interval-seconds: 30        # 默认为30秒  
-  instance: 
-    lease-renewal-interval-in-seconds: 30     # 心跳时间，即服务续约间隔时间（缺省为30s）
-    lease-expiration-duration-in-seconds: 90  # 发呆时间，即服务续约到期时间（缺省为90s） 
-    instance-id: ${spring.cloud.client.ipAddress}:${server.port}
-    
----
-spring:
-  profiles: native
-  rabbitmq:  #供Spring Bus用，用于动态刷新配置文件 
+  rabbitmq:
     #host: poc.jsptz.com
     #host: 192.170.11.6
     host: localhost
-    port: 5672 
-    username: admin 
-    password: rabbit2017
-  cloud:
-    config:
-      server:
-        native:
-#          searchLocations: classpath:/config
-          searchLocations: /home/kk/ideaProjects/pdfc2/server/config-server/src/main/resources/config
-    bus:
-      enabled: true
-      trace:
-        enabled: true  
-eureka: 
-  instance:
-    prefer-ip-address: true #注册时使用ip而不是主机名
-  client:  
-    serviceUrl:
-      defaultZone: http://${myauth.eureka.username}:${myauth.eureka.password}@localhost:8761/eureka/
-      
----
-spring:
-  profiles: westsea
-  rabbitmq:  #供Spring Bus用，用于动态刷新配置文件
-    host: 10.10.0.253
-    port: 5672 
-    username: admin 
-    password: rabbit2017
-  cloud:
-    config:
-      server:
-        git:
-          clone-on-start: true 
-          uri: http://10.10.1.235:9090/cloud/repo/     #默认配置库，实际生产中应该和下方的不一样
-          search-paths: config-repo
-          username: cloud
-          password: cloud@2017
-              
-eureka: 
-  instance:
-    prefer-ip-address: true #注册时使用ip而不是主机名
-  client:  
-    serviceUrl:
-      defaultZone: http://${myauth.eureka.username}:${myauth.eureka.password}@10.10.1.233:8761/eureka/
-      
---- 
-spring:
-  profiles: jsptz
-  rabbitmq: #供Spring Bus用，用于动态刷新配置文件
-    host: poc.jsptz.com
     port: 5672
-    username: admin 
-    password: rabbit2018
-  cloud: 
-    config:
-      server:
-        git: #默认配置库，实际生产中应该和下方的不一样
-          clone-on-start: true 
-          uri: http://poc.jsptz.com:9090/cloud/repo/
-          search-paths: config-repo
-          username: cloud
-          password: cloud@2017  
-    inetutils: 
-      preferred-networks: #指定使用的外网地址段
-      - 114.241
-eureka:  
+    username: admin
+    password: rabbit2017
+  redis:      #redis 配置
+    database: 0
+    password: 1234
+    host: localhost
+    port: 6379
+    pool:
+      max-wait: 30
+      max-idle: 5
+  cache:
+    type: redis
+  session:
+    store-type: redis
+
+    #server:
+    #session:
+    #timeout: 1800    #session超时时间1800秒(SessionConfig中配置的优先)
+# JWT
+jwt:
+  header: Authorization
+  secret: arch6Secret
+  expiration: 86400
+  tokenHead: "Arch6WithCloud "
+  jackson:
+    serialization:
+      INDENT_OUTPUT: true
+eureka:
   client:
-    serviceUrl:
-      defaultZone: http://${myauth.eureka.username}:${myauth.eureka.password}@poc.jsptz.com:8761/eureka/    
+    registry-fetch-interval-seconds: 10        # 默认为30秒
+  instance:
+    lease-renewal-interval-in-seconds: 10     # 心跳时间，即服务续约间隔时间（缺省为30s）
+    lease-expiration-duration-in-seconds: 30  # 发呆时间，即服务续约到期时间（缺省为90s）
+    prefer-ip-address: true
+    instance-id: ${spring.cloud.client.ipAddress}:${server.port}
+management:
+  health:
+    rabbit:
+      enabled: false
+    binders:
+      enabled: false
+  security:
+    enabled: false # spring-boot 1.5.2之后严格执行安全策略，所以需要配置这个为false ,否则很多点监控不到
+feign:
+  hystrix:
+    enabled: true #Hystrix支持，如果为true，hystrix库必须在classpath中
+  compression:
+    request:
+      enabled: true #请求GZIP压缩支持
+      mime-types: text/xml,application/xml,application/json #支持压缩的mime types
+      min-request-size: 2048
+    response:
+      enabled: true #响应GZIP压缩支持
+  httpclient:
+    enabled: true
+
+hystrix:
+  stream:
+    queue:
+      enabled: false
+  command:
+    default:
+      execution:
+        isolation:
+          thread.timeoutInMilliseconds: 5000 #让Hystrix的超时时间改为5秒,默认1秒
+
+multi_centre_database: #多数据中心生成索引不同配置：采用同一个数据库创建多个数据中心序列的schmea，每个schmea保存全套索引，索引的步长为10，用不同的起始值标记不同数据中心
+  multi_centre_flag: true  #采用多数据中心，当为true，centrerName和proxyCentrerName不能配置为空
+  current_centre_name: south_sequence  #应用实际连接的数据中心中的数据库中序列schema名称
+  proxy_centre_name: _(centre_sequence) #代码中需要替换的实际schema的占位字符串
